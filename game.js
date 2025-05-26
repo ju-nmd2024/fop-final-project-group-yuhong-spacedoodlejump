@@ -1,7 +1,13 @@
+// Initialize
 function setup() {
-  createCanvas(800, 600);
+    createCanvas(800, 600);
+    resetGame();
 }
 
-function draw() {
-  background(255, 140, 0);
-}
+// Reset game
+function resetGame() {
+    player.x = width / 2;
+    player.y = height - 100;
+    player.velocityY = player.jumpForce;
+    platforms = [];
+    score = 0;
