@@ -27,3 +27,33 @@ function setup() {
     createCanvas(800, 600);
     resetGame();
 }
+
+function draw() {
+    background(25, 25, 50);
+    
+    switch (gameState) {
+        case 'start':
+            drawStartScreen();
+            break;
+        case 'playing':
+            updateGame();
+            drawGame();
+            break;
+        case 'gameover':
+            drawGameOverScreen();
+            break;
+    }
+}
+
+function resetGame() {
+    player.x = width / 2;
+    player.y = height - 100;
+    player.velocityY = player.jumpForce;
+    platforms = [];
+    score = 0;
+    
+    // Create initial platforms
+    for (let i = 0; i < height / PLATFORM_SPACING; i++) {
+        createPlatform(height - i * PLATFORM_SPACING);
+    }
+}
