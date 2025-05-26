@@ -132,3 +132,188 @@ function drawFishes() {
         pop();
     }
 }
+
+function drawPlayer(x, y) {
+    // Draw diver
+    push();
+    // Body
+    fill(50, 50, 50);
+    ellipse(x, y, player.size); // Body
+    
+    // Oxygen tank
+    fill(100, 100, 100);
+    rect(x - 15, y - 10, 8, 20);
+    
+    // Mask
+    fill(150, 150, 255);
+    ellipse(x + 5, y - 5, player.size * 0.5);
+    
+    // Bubbles
+    if (player.velocityY < 0) {
+        fill(255, 255, 255, 150);
+        ellipse(x - 15, y + 10, 8);
+        ellipse(x - 12, y + 15, 6);
+        ellipse(x - 10, y + 20, 4);
+    }
+    pop();
+}
+
+function resetGame() {
+    player.x = width / 2;
+    player.y = height - 100;
+    player.velocityY = player.jumpForce;
+    platforms = [];
+    score = 0;
+    
+    // Create initial platforms
+    for (let i = 0; i < height / PLATFORM_SPACING; i++) {
+        createPlatform(height - i * PLATFORM_SPACING);
+    }
+}
+
+function createPlatform(y) {
+    let type = random(100) < 70 ? PLATFORM_TYPES.NORMAL : 
+               (random(100) < 50 ? PLATFORM_TYPES.MOVING : PLATFORM_TYPES.BREAKING);
+    
+    platforms.push({
+        x: random(width - PLATFORM_WIDTH),
+        y: y,
+        width: PLATFORM_WIDTH,
+        height: PLATFORM_HEIGHT,
+        type: type,
+        direction: random([-1, 1]),
+        broken: false,
+        breakTime: 0
+    });
+}
+
+function updateGame() {
+    // Player movement
+    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+        player.x = max(player.size/2, player.x - player.speed);
+    }
+    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+        player.x = min(width - player.size/2, player.x + player.speed);
+    }
+    
+    // Gravity
+    player.velocityY += 0.5;
+    player.y += player.velocityY;
+    
+    // Platform collision
+    for (let i = platforms.length - 1; i >= 0; i--) {
+        let platform = platforms[i];
+        
+        if (platform.type === PLATFORM_TYPES.MOVING) {
+            platform.x += platform.direction * 2;
+            if (platform.x <= 0 || platform.x + platform.width >= width) {
+                platform.direction *= -1;
+            }
+        }
+        
+        if (player.velocityY > 0 && 
+            player.x > platform.x && 
+            player.x < platform.x + platform.width &&
+            player.y > platform.y - player.size/2 && 
+            player.y < platform.y + platform.height) {
+            
+            if (platform.type === PLATFORM_TYPES.BREAKING && !platform.broken) {
+                platform.broken = true;
+                platform.breakTime = millis() + 200;
+            }
+            
+            if (!platform.broken) {
+                player.velocityY = player.jumpForce;
+            }
+        }
+        
+        if (platform.broken && millis() > platform.breakTime) {
+            platforms.splice(i, 1);
+        }
+    }
+    
+    // Camera and scoring
+    if (player.y < height/2) {
+        let diff = height/2 - player.y;
+        player.y += diff;
+        
+        for (let platform of platforms) {
+            platform.y += diff;
+        }
+        
+        score += Math.floor(diff);
+        highScore = Math.max(score, highScore);
+        
+        platforms = platforms.filter(p => p.y < height);
+        while (platforms.length < height / PLATFORM_SPACING) {
+            createPlatform(0);
+        }
+    }
+    
+    if (player.y > height) {
+        gameState = 'gameover';
+    }
+}
+
+function drawGame() {
+    // Draw platforms
+    for (let platform of platforms) {
+        if (platform.broken) {
+            fill(255, 0, 0, 100);
+        } else {
+            switch (platform.type) {
+                case PLATFORM_TYPES.NORMAL:
+                    fill(100, 200, 255);  // Lighter blue for platforms
+                    break;
+                case PLATFORM_TYPES.MOVING:
+                    fill(100, 255, 200);  // Sea green for moving platforms
+                    break;
+                case PLATFORM_TYPES.BREAKING:
+                    fill(255, 150, 150);  // Coral color for breaking platforms
+                    break;
+            }
+        }
+        noStroke();
+        rect(platform.x, platform.y, platform.width, platform.height);
+    }
+    
+    // Draw player (diver)
+    drawPlayer(player.x, player.y);
+    
+    // Draw score
+    fill(255);
+    textAlign(LEFT);
+    textSize(20);
+    text('Depth: ' + score + 'm', 10, 30);
+}
+
+function drawStartScreen() {
+    fill(255);
+    textAlign(CENTER);
+    textSize(32);
+    text('Ocean Explorer', width/2, height/3);
+    textSize(16);
+    text('Press SPACE to Dive', width/2, height/2);
+    text('Use LEFT/RIGHT arrows to swim', width/2, height/2 + 30);
+}
+
+function drawGameOverScreen() {
+    fill(255);
+    textAlign(CENTER);
+    textSize(32);
+    text('Surfaced!', width/2, height/3);
+    textSize(24);
+    text('Depth Reached: ' + score + 'm', width/2, height/2);
+    text('Record Depth: ' + highScore + 'm', width/2, height/2 + 40);
+    textSize(16);
+    text('Press SPACE to Dive Again', width/2, height/2 + 80);
+}
+
+function keyPressed() {
+    if (key === ' ') {
+        if (gameState === 'start' || gameState === 'gameover') {
+            gameState = 'playing';
+            resetGame();
+        }
+    }
+} 
