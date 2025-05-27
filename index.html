@@ -6,20 +6,36 @@
     <title>Ocean Explorer Game</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background-color: #001f3f;
+            overflow: hidden;
         }
+
+        #gameContainer {
+            position: relative;
+        }
+
         canvas {
+            display: block;
             border: 2px solid #ffffff;
         }
     </style>
 </head>
 <body>
-    <script src="sketch.js"></script>
+    <div id="gameContainer">
+        <script src="sketch.js"></script>
+    </div>
 </body>
 </html> 
